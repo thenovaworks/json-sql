@@ -10,15 +10,43 @@ import java.util.*
 
 data class QueryResult(val columns: List<String>, val data: List<Map<String, Any>>)
 
-class JsonQueryHandler(private val schemaName: String, private val json: String) {
+class JsonQueryHandler(private val schemaName: String, private val jsonMessage: String) {
     private val objectMapper: ObjectMapper = jacksonObjectMapper()
-    private val rootNode: JsonNode = objectMapper.readTree(json)
+    private val rootNode: JsonNode = objectMapper.readTree(jsonMessage)
 
-    private fun checkForUnboundParameters(condition: String) {
-        val unboundParameterPattern = Regex(":\\w+")
-        val matchResult = unboundParameterPattern.find(condition)
-        if (matchResult != null) {
-            throw IllegalArgumentException("Unbounded parameter error. `${matchResult.value}`")
+    fun executeQuery(query: String, params: Map<String, Any> = emptyMap()): Either<String, QueryResult> {
+        return try {
+            val selectPattern =
+                Regex("(?i)select\\s+(.+)\\s+from\\s+$schemaName(?:\\s+where\\s+(.+))?", RegexOption.DOT_MATCHES_ALL)
+            val matchResult = selectPattern.matchEntire(query.trim())
+                ?: return "Invalid query format".left()
+
+            val columns = matchResult.groupValues[1].split(",").map { it.trim() }
+            val whereCondition = matchResult.groupValues.getOrNull(2)?.trim()
+                ?.let { substituteParams(it, params) }
+                ?.also { checkForUnboundParameters(it) }
+            // println("CHK executeQuery.whereCondition ----- $whereCondition")
+
+            val tokens = whereCondition?.let { tokenizeCondition(it) }
+            val records = rootNode.toRecordList()
+            val filteredRecords = if (tokens.isNullOrEmpty() || isAlwaysTrueCondition(whereCondition)) {
+                records
+            } else {
+                records.filter { evaluateTokens(it, tokens) }
+            }
+
+            val results = filteredRecords.map { record ->
+                columns.associateWith { column ->
+                    getValueFromJson(record, column)
+                }
+            }
+
+            QueryResult(columns, results).right()
+
+            QueryResult(columns, results).right()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            e.message.orEmpty().left()
         }
     }
 
@@ -30,23 +58,17 @@ class JsonQueryHandler(private val schemaName: String, private val json: String)
         return result
     }
 
-    private fun filterRecords(jsonNode: JsonNode, whereCondition: String): List<JsonNode> {
-        return if (evaluateConditions(jsonNode, whereCondition)) {
-            listOf(jsonNode)
-        } else {
-            emptyList()
+    private fun checkForUnboundParameters(condition: String) {
+        val unboundParameterPattern = Regex(":\\w+")
+        val matchResult = unboundParameterPattern.find(condition)
+        if (matchResult != null) {
+            throw IllegalArgumentException("Unbounded parameter error: ${matchResult.value}")
         }
     }
 
-    private fun evaluateConditions(jsonNode: JsonNode, whereCondition: String): Boolean {
-        val tokens = tokenizeCondition(whereCondition)
-        println("tokens: ${tokens.size}")
-        println("tokens: ${tokens}")
-        return evaluateTokens(jsonNode, tokens)
-    }
-
     private fun tokenizeCondition(condition: String): List<String> {
-        val regex = Regex("(?i)\\s*(and|or)\\s*|\\s*([^\\s]+\\s*=\\s*'[^']+')\\s*")
+        // println("CHK tokenizeCondition --- $condition")
+        val regex = Regex("(?i)(and|or|[^\\s]+\\s*(<=|>=|=|<|>)\\s*'[^']*'|[^\\s]+\\s*(<=|>=|=|<|>)\\s*[^\\s]+)")
         return regex.findAll(condition).map { it.value.trim() }.toList()
     }
 
@@ -60,8 +82,6 @@ class JsonQueryHandler(private val schemaName: String, private val json: String)
             val operator = tokens[index].lowercase(Locale.getDefault())
             val nextCondition = tokens[index + 1]
 
-            println("CHK operator: $operator")
-
             when (operator) {
                 "and" -> result = result && evaluateCondition(jsonNode, nextCondition)
                 "or" -> result = result || evaluateCondition(jsonNode, nextCondition)
@@ -72,14 +92,46 @@ class JsonQueryHandler(private val schemaName: String, private val json: String)
         return result
     }
 
-    private fun evaluateCondition(jsonNode: JsonNode, condition: String): Boolean {
-        val conditionPattern = Regex("(.+?)\\s*=\\s*'(.+)'")
-        val matchResult = conditionPattern.matchEntire(condition) ?: return false
-        val field = matchResult.groupValues[1].trim()
-        val value = matchResult.groupValues[2].trim()
-        val attrVal = getValueFromJson(jsonNode, field)
-        return value == attrVal
+
+    private fun compareValues(fieldValue: String, value: String): Int {
+        return if (toNumber(fieldValue) is Number) {
+            fieldValue.toDouble().compareTo(value.toDoubleOrNull() ?: return -1)
+        } else {
+            fieldValue.compareTo(value)
+        }
     }
+
+    private fun toNumber(stringVal: String): Comparable<Number> {
+        return try {
+            stringVal.toIntOrNull()?.let { it as Comparable<Number> }
+                ?: stringVal.toFloat() as Comparable<Number>
+        } catch (e: NumberFormatException) {
+            throw IllegalArgumentException("Invalid number format: $stringVal")
+        }
+    }
+
+    private fun evaluateCondition(jsonNode: JsonNode, condition: String): Boolean {
+        // println("CHK condition --- $condition")
+        val conditionPattern = Regex("(.+?)\\s*(<=|>=|=|<|>)\\s*'(.+)'|(.+?)\\s*(<=|>=|=|<|>)\\s*(.+)")
+        val matchResult = conditionPattern.matchEntire(condition) ?: return false
+
+        val field = matchResult.groupValues[1].trim().ifEmpty { matchResult.groupValues[4].trim() }
+        val operator = matchResult.groupValues[2].trim().ifEmpty { matchResult.groupValues[5].trim() }
+        val value = matchResult.groupValues[3].trim().ifEmpty { matchResult.groupValues[6].trim() }
+
+        val fieldValue = getValueFromJson(jsonNode, field)
+        // println("CHK evaluateCondition --- $fieldValue $operator $value")
+
+        return when (operator) {
+            "=" -> fieldValue.toString() == value
+            "<" -> compareValues(fieldValue.toString(), value) < 0
+            ">" -> compareValues(fieldValue.toString(), value) > 0
+            "<=" -> compareValues(fieldValue.toString(), value) <= 0
+            ">=" -> compareValues(fieldValue.toString(), value) >= 0
+            else -> false
+        }
+    }
+
 
     private fun isAlwaysTrueCondition(condition: String): Boolean {
         return condition.equals("1 = 1", ignoreCase = true) || condition.equals("'T' = 'T'", ignoreCase = true)
@@ -102,74 +154,32 @@ class JsonQueryHandler(private val schemaName: String, private val json: String)
         }
     }
 
-
-    fun executeQuery(query: String, params: Map<String, Any>): Either<String, QueryResult> {
-        return try {
-//            val selectPattern = Regex("select (.+) from $schemaName(?: where (.*))?", RegexOption.IGNORE_CASE)
-//            val matchResult = selectPattern.matchEntire(query.trim())
-//                ?: return "Invalid query format".left()
-//            println("matchResult: $matchResult")
-            val selectPattern =
-                Regex("(?i)select\\s+(.+)\\s+from\\s+$schemaName(?:\\s+where\\s+(.+))?", RegexOption.DOT_MATCHES_ALL)
-            val matchResult = selectPattern.matchEntire(query.trim())
-                ?: return "Invalid query format".left()
-
-            val columns = matchResult.groupValues[1].split(",").map { it.trim() }
-            val whereCondition = matchResult.groupValues.getOrNull(2)?.trim()
-                ?.let { substituteParams(it, params) }
-                ?.also { checkForUnboundParameters(it) }
-
-            println("CHK whereCondition: $whereCondition")
-
-            val filteredRecords = if (whereCondition.isNullOrEmpty() || isAlwaysTrueCondition(whereCondition)) {
-                listOf(rootNode)
-            } else {
-                filterRecords(rootNode, whereCondition)
-            }
-
-            val results = filteredRecords.map { record ->
-                columns.associateWith { column ->
-                    getValueFromJson(record, column)
-                }
-            }
-
-            QueryResult(columns, results).right()
-        } catch (e: Exception) {
-            // e.printStackTrace()
-            e.message.orEmpty().left()
+    private fun JsonNode.toRecordList(): List<JsonNode> {
+        return if (this.isArray) {
+            this.toList()
+        } else {
+            listOf(this)
         }
     }
-}
 
-class SqlSession(private val queryHandler: JsonQueryHandler) {
-
-    fun executeQuery(query: String, params: Map<String, Any> = emptyMap()): Either<String, QueryResult> {
-        return queryHandler.executeQuery(query, params)
+    fun getKeys(depth: Int): List<String> {
+        println("getKeys.depth: $depth")
+        return if (rootNode.isArray && rootNode.size() > 0) {
+            getLevelKeys(rootNode[0], depth)
+        } else {
+            getLevelKeys(rootNode, depth)
+        }
     }
 
-    fun queryForObject(query: String, params: Map<String, Any> = emptyMap()): Map<String, Any> {
-        val resultSet = executeQuery(query, params)
-        val record = resultSet.fold(
-            { error ->
-                mapOf("ERROR" to error)
-            },
-            { result ->
-                result.data.firstOrNull() ?: emptyMap()
-            }
-        )
-        return record
-    }
-
-    fun queryForList(resultSet: Either<String, QueryResult>): List<Map<out Any, Any>> {
-        val records = resultSet.fold(
-            { _ ->
-                //mapOf("ERROR" to $it[0])
-                emptyList<Map<Any, Any>>()
-            },
-            { result ->
-                result.data.toList()
-            }
-        )
-        return records
+    private fun getLevelKeys(node: JsonNode, depth: Int, currentPath: String = ""): List<String> {
+        if (depth == 0 || !node.isObject) {
+            return listOf(currentPath.removePrefix("."))
+        }
+        val keys = mutableListOf<String>()
+        node.fields().forEach { (key, value) ->
+            val newPath = if (currentPath.isEmpty()) key else "$currentPath.$key"
+            keys.addAll(getLevelKeys(value, depth - 1, newPath))
+        }
+        return keys
     }
 }

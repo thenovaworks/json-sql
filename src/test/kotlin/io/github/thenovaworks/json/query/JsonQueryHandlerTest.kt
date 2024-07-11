@@ -2,117 +2,72 @@ package io.github.thenovaworks.json.query
 
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import kotlin.test.assertEquals
+import org.junit.jupiter.api.MethodOrderer
+import org.junit.jupiter.api.Order
+import org.junit.jupiter.api.TestMethodOrder
+import kotlin.test.assertEquals
 
-
+@TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class JsonQueryHandlerTest {
 
-    private val json101 = """
-        {
-          "version": "0",
-          "id": "7bf73129-1428-4cd3-a780-95db273d1602",
-          "detail-type": "AWS Health Event",
-          "source": "aws.health",
-          "account": "123456789012",
-          "time": "2023-01-26T01:43:21Z",
-          "region": "ap-southeast-2",
-          "resources": [],
-          "detail": {
-            "eventArn": "arn:aws:health:ap-southeast-2::event/AWS_ELASTICLOADBALANCING_API_ISSUE_90353408594353980",
-            "service": "ELASTICLOADBALANCING",
-            "eventTypeCode": "AWS_ELASTICLOADBALANCING_OPERATIONAL_ISSUE",
-            "eventTypeCategory": "issue",
-            "eventScopeCode": "PUBLIC",
-            "communicationId": "4826e1b01e4eed2b0f117c54306d907c713586799d76d487c9132a40149ac107-1",
-            "startTime": "Thu, 26 Jan 2023 13:19:03 GMT",
-            "endTime": "Thu, 26 Jan 2023 13:44:13 GMT",
-            "lastUpdatedTime": "Thu, 26 Jan 2023 13:44:13 GMT",
-            "statusCode": "open",
-            "eventRegion": "ap-southeast-2",
-            "eventDescription": [
-              {
-                "language": "en_US",
-                "latestDescription": "A description of the event will be provided here"
-              }
-            ],
-            "affectedAccount": "123456789012",
-            "page": "1",
-            "totalPages": "1"
-          }
-        }
-    """
+    @Test
+    @Order(1)
+    fun `test-convertStringToNumber`(): Unit {
+        val val1 = "1"
+        val val2 = "23.0"
 
-    private val json102 = """
-        {
-          "version": "0",
-          "id": "26005bdb-b6eb-466d-920c-3ab19b1d7ea2",
-          "detail-type": "AWS Health Event",
-          "source": "aws.health",
-          "account": "123456789012",
-          "time": "2023-01-27T01:43:21Z",
-          "region": "us-west-2",
-          "resources": ["arn:ec2-1-101002929", "arn:ec2-1-101002930", "arn:ec2-1-101002931", "arn:ec2-1-101002932"],
-          "detail": {
-            "eventArn": "arn:aws:health:us-west-2::event/AWS_EC2_INSTANCE_STORE_DRIVE_PERFORMANCE_DEGRADED_90353408594353980",
-            "service": "EC2",
-            "eventTypeCode": "AWS_EC2_INSTANCE_STORE_DRIVE_PERFORMANCE_DEGRADED",
-            "eventTypeCategory": "issue",
-            "eventScopeCode": "ACCOUNT_SPECIFIC",
-            "communicationId": "1234abc01232a4012345678-1",
-            "startTime": "Thu, 27 Jan 2023 13:19:03 GMT",
-            "lastUpdatedTime": "Thu, 27 Jan 2023 13:44:13 GMT",
-            "statusCode": "open",
-            "eventRegion": "us-west-2",
-            "eventDescription": [{
-              "language": "en_US",
-              "latestDescription": "A description of the event will be provided here"
-            }],
-            "eventMetadata": {
-              "keystring1": "valuestring1",
-              "keystring2": "valuestring2",
-              "keystring3": "valuestring3",
-              "keystring4": "valuestring4",
-              "truncated": "true"
-            },
-            "affectedEntities": [{
-              "entityValue": "arn:ec2-1-101002929",
-              "lastUpdatedTime": "Thu, 26 Jan 2023 19:01:55 GMT",
-              "status": "IMPAIRED"
-            }, {
-              "entityValue": "arn:ec2-1-101002930",
-              "lastUpdatedTime": "Thu, 26 Jan 2023 19:05:12 GMT",
-              "status": "IMPAIRED"
-            }, {
-              "entityValue": "arn:ec2-1-101002931",
-              "lastUpdatedTime": "Thu, 26 Jan 2023 19:07:13 GMT",
-              "status": "UNIMPAIRED"
-            }, {
-              "entityValue": "arn:ec2-1-101002932",
-              "lastUpdatedTime": "Thu, 26 Jan 2023 19:10:59 GMT",
-              "status": "RESOLVED"
-            }],
-            "affectedAccount": "123456789012",
-            "page": "1",
-            "totalPages": "10"
-          }
+        val num1 = val1.toDoubleOrNull()
+        val num2 = val2.toDoubleOrNull()
+
+        if (num1 != null && num2 != null) {
+            if (num1 < num2) {
+                println("$val1 is less than $val2")
+            } else if (num1 > num2) {
+                println("$val1 is greater than $val2")
+            } else {
+                println("$val1 is equal to $val2")
+            }
+        } else {
+            println("One of the values is not a valid number")
         }
-    """
+    }
+
+    private fun toJsonString(filepath: String): String {
+        try {
+            return object {}.javaClass.getResourceAsStream(filepath)?.bufferedReader().use { it?.readText() ?: "" }
+        } catch (e: Exception) {
+            println("Error reading file: ${e.message}")
+            return ""
+        }
+    }
+
+    private val json101 = toJsonString("/health101.json")
+
+    private val json102 = toJsonString("/health102.json")
 
     @Test
+    @Order(2)
     fun `test-query`(): Unit {
-        val sqlSession = SqlSession(JsonQueryHandler("HEALTH", json101))
-        val record = sqlSession.queryForObject("select id, detail.service, detail.statusCode, region from HEALTH")
-        println("record: $record")
+        val resultSet = SqlSession(
+            JsonQueryHandler("HEALTH", json101)
+        ).executeQuery("select id, detail.service, detail.statusCode, region from HEALTH")
+        // println("resultSet: $resultSet")
+        assertEquals("7bf73129-1428-4cd3-a780-95db273d1602", resultSet.map { v -> v.data[0]["id"] }.getOrNull())
     }
 
     @Test
+    @Order(3)
     fun `test-query-with-parameter`(): Unit {
         val sqlSession = SqlSession(JsonQueryHandler("HEALTH", json101))
         val sql = "select id, detail.service, detail.statusCode, region from HEALTH where id = :id"
         val record = sqlSession.queryForObject(sql, mapOf("id" to "7bf73129-1428-4cd3-a780-95db273d1602"))
         println("record: $record")
+        assertEquals("7bf73129-1428-4cd3-a780-95db273d1602", record["id"])
     }
 
     @Test
+    @Order(4)
     fun `test-query-with-conditions-and`(): Unit {
         val sqlSession = SqlSession(JsonQueryHandler("HEALTH", json101))
         val params = mapOf(
@@ -127,6 +82,7 @@ class JsonQueryHandlerTest {
     }
 
     @Test
+    @Order(5)
     fun `test-query-with-conditions-or`(): Unit {
         val sqlSession = SqlSession(JsonQueryHandler("HEALTH", json101))
         val params = mapOf(
@@ -144,6 +100,7 @@ class JsonQueryHandlerTest {
     }
 
     @Test
+    @Order(6)
     fun `test-query-with-conditions-multi`(): Unit {
         val sqlSession = SqlSession(JsonQueryHandler("HEALTH", json101))
         val params = mapOf(
@@ -155,9 +112,11 @@ class JsonQueryHandlerTest {
             "select id, source, detail.service, detail.statusCode, region from HEALTH where id = :id and source = :source or detail.statusCode = :statusCode"
         val record = sqlSession.queryForObject(sql, params)
         println("record: $record")
+        assertEquals("ap-southeast-2", record["region"])
     }
 
     @Test
+    @Order(7)
     fun `test-query-102-with-conditions`(): Unit {
         val sqlSession = SqlSession(JsonQueryHandler("HEALTH", json102))
         val sql = """
@@ -175,9 +134,12 @@ and     source = 'aws.health'
         """
         val record = sqlSession.queryForObject(sql)
         println("record: $record")
+        assertEquals("EC2", record["detail.service"])
+        assertEquals("2023-01-27T01:43:21Z", record["time"])
     }
 
     @Test
+    @Order(8)
     fun `test-query-102-with-condition-param`(): Unit {
         val sqlSession = SqlSession(JsonQueryHandler("HEALTH", json102))
         val params = mapOf(
@@ -190,4 +152,77 @@ and     source = 'aws.health'
         val record = sqlSession.queryForObject(sql, params)
         println("record: $record")
     }
+
+    @Test
+    @Order(9)
+    fun `test-users-101`(): Unit {
+        val json = toJsonString("/users101.json")
+        val sqlSession = SqlSession(JsonQueryHandler("USER", json))
+        val sql = """
+select  id, index, guid, isActive, balance, 
+        age, eyeColor, name, gender, company, 
+        email, phone, address, registered
+from    USER 
+where   id = :id
+    """
+        val records = sqlSession.queryForList(sql, mapOf("id" to "668feca3b450e6d8f583b561"))
+        records.forEach(::println)
+        println("keys: ${sqlSession.getKeys(2)}")
+        assertEquals(1, records.size)
+    }
+
+
+    @Test
+    @Order(10)
+    fun `test-users-102-active`(): Unit {
+        val json = toJsonString("/users102.json")
+        val sqlSession = SqlSession(JsonQueryHandler("USER", json))
+        val sql = """
+select  id, index, guid, isActive, balance, 
+        age, eyeColor, name, gender, company, 
+        email, phone, address, registered
+from    USER 
+where   isActive = false
+    """
+        val records = sqlSession.queryForList(sql, mapOf("index" to 20))
+        records.forEach(::println)
+        assertEquals(13, records.size)
+    }
+
+    @Test
+    @Order(11)
+    fun `test-users-102-index`(): Unit {
+        val json = toJsonString("/users102.json")
+        val sqlSession = SqlSession(JsonQueryHandler("USER", json))
+        val sql = """
+select  id, index, guid, isActive, balance, 
+        age, eyeColor, name, gender, company, 
+        email, phone, address, registered
+from    USER 
+where   index > :index
+    """
+        val records = sqlSession.queryForList(sql, mapOf("index" to 20))
+        records.forEach(::println)
+        println("keys: ${sqlSession.getKeys(2)}")
+        assertEquals(5, records.size)
+    }
+
+    @Test
+    @Order(12)
+    fun `test-users-102-age`(): Unit {
+        val json = toJsonString("/users102.json")
+        val sqlSession = SqlSession(JsonQueryHandler("USER", json))
+        val sql = """
+select  id, index, guid, isActive, balance, 
+        age, eyeColor, name, gender, company, 
+        email, phone, address, registered
+from    USER 
+where   age > 28 and age <= 30 
+    """
+        val records = sqlSession.queryForList(sql, mapOf("index" to 20))
+        records.forEach(::println)
+        // println("keys: ${sqlSession.getKeys(2)}")
+        assertEquals(4, records.size)
+    }
+
 }

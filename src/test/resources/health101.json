@@ -1,0 +1,32 @@
+{
+  "version": "0",
+  "id": "7bf73129-1428-4cd3-a780-95db273d1602",
+  "detail-type": "AWS Health Event",
+  "source": "aws.health",
+  "account": "123456789012",
+  "time": "2023-01-26T01:43:21Z",
+  "region": "ap-southeast-2",
+  "resources": [],
+  "detail": {
+    "eventArn": "arn:aws:health:ap-southeast-2::event/AWS_ELASTICLOADBALANCING_API_ISSUE_90353408594353980",
+    "service": "ELASTICLOADBALANCING",
+    "eventTypeCode": "AWS_ELASTICLOADBALANCING_OPERATIONAL_ISSUE",
+    "eventTypeCategory": "issue",
+    "eventScopeCode": "PUBLIC",
+    "communicationId": "4826e1b01e4eed2b0f117c54306d907c713586799d76d487c9132a40149ac107-1",
+    "startTime": "Thu, 26 Jan 2023 13:19:03 GMT",
+    "endTime": "Thu, 26 Jan 2023 13:44:13 GMT",
+    "lastUpdatedTime": "Thu, 26 Jan 2023 13:44:13 GMT",
+    "statusCode": "open",
+    "eventRegion": "ap-southeast-2",
+    "eventDescription": [
+      {
+        "language": "en_US",
+        "latestDescription": "A description of the event will be provided here"
+      }
+    ],
+    "affectedAccount": "123456789012",
+    "page": "1",
+    "totalPages": "1"
+  }
+}

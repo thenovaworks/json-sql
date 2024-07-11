@@ -1,0 +1,16 @@
+{
+  "version": "0",
+  "id": "7bf73129-1428-4cd3-a780-95db273d1602",
+  "detail-type": "AWS Health Event",
+  "source": "aws.health",
+  "account": "123456789012",
+  "time": "2023-01-26T01:43:21Z",
+  "region": "ap-southeast-2",
+  "resources": [],
+  "detail": {
+    "service": "EC2",
+    "eventTypeCategory": "issue",
+    "eventScopeCode": "ACCOUNT_SPECIFIC",
+    "communicationId": "1234abc01232a4012345678-1"
+  }
+}
