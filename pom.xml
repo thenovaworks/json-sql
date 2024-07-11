@@ -35,19 +35,20 @@
 
     <scm>
         <connection>scm:git:https://github.com/thenovaworks/json-sql.git</connection>
-        <developerConnection>scm:git:ssh://github.com/thenovaworks/spring-boot-starter-aws-secrets-manager.git</developerConnection>
+        <developerConnection>scm:git:ssh://github.com/thenovaworks/spring-boot-starter-aws-secrets-manager.git
+        </developerConnection>
         <url>https://github.com/thenovaworks/json-sql.git</url>
     </scm>
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <kotlin-maven-plugin.jvmTarget>17</kotlin-maven-plugin.jvmTarget>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <kotlin.version>2.0.0</kotlin.version>
         <arrow.version>1.2.1</arrow.version>
         <junit.version>5.10.2</junit.version>
         <mockk.version>1.13.10</mockk.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
 
     <dependencies>
@@ -102,7 +103,7 @@
     <build>
         <sourceDirectory>src/main/kotlin</sourceDirectory>
         <testSourceDirectory>src/test/kotlin</testSourceDirectory>
-        <finalName>${project.artifactId}</finalName>
+        <!-- <finalName>${project.artifactId}</finalName> -->
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

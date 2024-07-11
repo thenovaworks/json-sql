@@ -1,5 +1,6 @@
 package io.github.thenovaworks.json.query
 
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
 
@@ -38,7 +39,7 @@ class JsonQueryHandlerTest {
             "totalPages": "1"
           }
         }
-    """.trimIndent()
+    """
 
     private val json102 = """
         {
@@ -94,7 +95,7 @@ class JsonQueryHandlerTest {
             "totalPages": "10"
           }
         }
-    """.trimIndent()
+    """
 
     @Test
     fun `test-query`(): Unit {
@@ -122,7 +123,7 @@ class JsonQueryHandlerTest {
         val sql =
             "select id, detail.service, detail.statusCode, region from HEALTH where id = :id and detail.statusCode = :statusCode"
         val record = sqlSession.queryForObject(sql, params)
-        println("record: $record")
+        Assertions.assertEquals(0, record.size)
     }
 
     @Test
@@ -133,10 +134,13 @@ class JsonQueryHandlerTest {
             "source" to "aws.health",
             "statusCode" to "closed"
         )
-        val sql =
-            "select id, detail.service, detail.statusCode, region from HEALTH where id = :id or detail.statusCode = :statusCode"
+        val sql = "select id, detail.service, detail.statusCode, region, detail.eventScopeCode from HEALTH " +
+                "where id = :id or detail.statusCode = :statusCode"
         val record = sqlSession.queryForObject(sql, params)
         println("record: $record")
+        Assertions.assertEquals("ELASTICLOADBALANCING", record.get("detail.service"))
+        Assertions.assertEquals("open", record.get("detail.statusCode"))
+        Assertions.assertEquals("PUBLIC", record.get("detail.eventScopeCode"))
     }
 
     @Test
