@@ -15,18 +15,18 @@ This is easily access JSON messages through SQL query expressions.
     "isActive": false,
     "age": 39,
     "name": "Long Phillips",
-    "gender": "male",
     "email": "longphillips@imant.com",
     "registered": "2022-07-18T04:35:17 -09:00"
   }    
     """
-    val sqlSession = SqlSession(JsonQueryHandler("USER", json))
-    val record = sqlSession.queryForObject("select id, guid, isActive, name, email from USER")
-    println("record: $record")
+
+val sql = "select id, guid, isActive, name, email from USER where id = '668ff4482965ffc5acb09c08'"
+val sqlSession = SqlSession(JsonQueryHandler("USER", json))
+val record = sqlSession.queryForObject(sql)
+println("record: $record")
 ```
 
 ### Query Json and convert to List type
-
 
 ```kotlin
     val json = """
@@ -48,23 +48,57 @@ This is easily access JSON messages through SQL query expressions.
     "isActive": true,
     "age": 31,
     "name": "Rodgers Carr",
-    "gender": "male",
     "email": "rodgerscarr@brainquil.com",
     "registered": "2019-01-30T03:59:21 -09:00"
   }
 ]    
     """
-    val sqlSession = SqlSession(JsonQueryHandler("USER", json))
-    val sql = """
-    select  id, index, guid, isActive, balance, 
-            age, eyeColor, name, gender, company, 
-            email, phone, address, registered
+
+val sql = """
+    select  id, index, guid, isActive, age, 
+            name, email, registered
     from    USER 
     where   age > 28 and age <= 30 
-        """
-    val records = sqlSession.queryForList(sql, mapOf("index" to 20))
-    records.forEach(::println)
+    """
+val sqlSession = SqlSession(JsonQueryHandler("USER", json))
+val records = sqlSession.queryForList(sql, mapOf("index" to 20))
+records.forEach(::println)
 ```
+
+### Get the name of json attributes
+
+Get the names of json properties by identifying them according to the hierarchy.
+
+
+```kotlin
+    val json = """
+  {
+    "id": "668feca3b450e6d8f583b561",
+    "index": 0,
+    "guid": "704a409d-e95d-4aca-bd46-782d050a9b77",
+    "isActive": false,
+    "age": 39,
+    "name": "Long Phillips",
+    "email": "longphillips@imant.com",
+    "registered": "2022-07-18T04:35:17 -09:00",
+    "detail": {
+        "category": "issue",
+        "code": "APPLE101",
+        "communicationId": "1234abc01232a4012345678-1"
+    }
+  }    
+    """
+
+val sql = "select id, guid, isActive, name, email from USER where id = '668ff4482965ffc5acb09c08'"
+val sqlSession = SqlSession(JsonQueryHandler("USER", json))
+
+// Get the name of attributes only first depth 
+println("Names for json attributes: ${sqlSession.getKeys()}")
+
+// Get the name of attributes included second depth 
+println("Names for json attributes included second depth: ${sqlSession.getKeys(2)}")
+```
+
 
 ## What to do First?
 [json-sql](https://github.com/thenovaworks/json-sql.git)를 사용 하려면 Maven 또는 Gradle 프로젝트에 디펜던시를 추가하면 됩니다.
