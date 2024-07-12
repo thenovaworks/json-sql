@@ -3,7 +3,7 @@
   "id": "26005bdb-b6eb-466d-920c-3ab19b1d7ea2",
   "detail-type": "AWS Health Event",
   "source": "aws.health",
-  "account": "123456789012",
+  "account": "111122223333",
   "time": "2023-01-27T01:43:21Z",
   "region": "us-west-2",
   "resources": [
@@ -58,7 +58,7 @@
         "status": "RESOLVED"
       }
     ],
-    "affectedAccount": "123456789012",
+    "affectedAccount": "111122223333",
     "page": "1",
     "totalPages": "10"
   }
