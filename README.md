@@ -131,6 +131,8 @@ dependencies {
 ```
 mvn clean package -DskipTests=true
 
+# only install for local
+mvn clean install -Dgpg.skip
 ```
 
 ## References
