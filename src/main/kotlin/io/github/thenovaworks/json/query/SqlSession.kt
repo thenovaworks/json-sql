@@ -13,7 +13,7 @@ class SqlSession(private val queryHandler: JsonQueryHandler) {
         val record = resultSet.fold(
             { error -> throw RuntimeException(error) },
             { result ->
-                result.data.firstOrNull() ?: throw RuntimeException("Data not found.")
+                result.data.firstOrNull() ?: emptyMap()
             })
         return record
     }
