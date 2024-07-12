@@ -101,7 +101,8 @@ println("Names for json attributes included second depth: ${sqlSession.getKeys(2
 
 
 ## What to do First?
-[json-sql](https://github.com/thenovaworks/json-sql.git)를 사용 하려면 Maven 또는 Gradle 프로젝트에 디펜던시를 추가하면 됩니다.
+
+To use [json-sql](https://github.com/thenovaworks/json-sql.git), simply add a dependency to your Maven or Gradle project.
 
 
 - Maven
