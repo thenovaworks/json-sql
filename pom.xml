@@ -6,7 +6,7 @@
     <packaging>jar</packaging>
     <version>1.0.0</version>
     <name>json-sql</name>
-    <url>https://maven.apache.org</url>
+    <url>https://symplesims.github.io/</url>
 
     <distributionManagement>
         <snapshotRepository>
@@ -35,8 +35,7 @@
 
     <scm>
         <connection>scm:git:https://github.com/thenovaworks/json-sql.git</connection>
-        <developerConnection>scm:git:ssh://github.com/thenovaworks/spring-boot-starter-aws-secrets-manager.git
-        </developerConnection>
+        <developerConnection>scm:git:ssh://github.com/thenovaworks/json-sql.git</developerConnection>
         <url>https://github.com/thenovaworks/json-sql.git</url>
     </scm>
     <properties>
