@@ -1,11 +1,6 @@
 package io.github.thenovaworks.json.query
 
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Test
-import kotlin.test.assertEquals
-import org.junit.jupiter.api.MethodOrderer
-import org.junit.jupiter.api.Order
-import org.junit.jupiter.api.TestMethodOrder
+import org.junit.jupiter.api.*
 import kotlin.test.assertEquals
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
@@ -223,6 +218,48 @@ where   age > 28 and age <= 30
         records.forEach(::println)
         // println("keys: ${sqlSession.getKeys(2)}")
         assertEquals(4, records.size)
+    }
+
+
+    @Test
+    @Order(13)
+    fun `test-users-103-where-params`(): Unit {
+        val json = toJsonString("/users103.json")
+        val sqlSession = SqlSession(JsonQueryHandler("member", json))
+        val sql = """
+select  index, guid, isActive, balance, age, 
+        eyeColor, name, gender, company, email, 
+        phone, address, registered, latitude, longitude, 
+        tags, friends, greeting, favoriteFruit
+from    member
+where   gender = :gender
+and     age <= :age
+and     eyeColor = :eyeColor
+    """
+        val records = sqlSession.queryForList(sql, mapOf("gender" to "female", "age" to "30", "eyeColor" to "blue"))
+        records.forEach(::println)
+        // println("keys: ${sqlSession.getKeys(2)}")
+        assertEquals(2, records.size)
+    }
+
+    @Test
+    @Order(14)
+    fun `test-health-104-result-map-utils`(): Unit {
+        val json = toJsonString("/health104.json")
+        val sqlSession = SqlSession(JsonQueryHandler("health", json))
+        val sql = """
+select  id, detail-type, source, account, time, region, resources, 
+        detail.eventArn, detail.service, detail.eventTypeCode, detail.eventTypeCategory, detail.eventScopeCode, 
+        detail.startTime, detail.lastUpdatedTime, detail.statusCode, detail.eventRegion, detail.eventDescription, 
+        detail.affectedEntities, detail.affectedAccount
+from    health
+    """
+        val rs = sqlSession.queryForObject(sql)
+        val list = ResultMapUtils.toList(rs["detail.eventDescription"])
+        val data = list.map { row ->
+            ResultMapUtils.toMap(row)
+        }.firstOrNull() // .forEach { println(it) }
+        assertEquals("en_US", data?.get("language"))
     }
 
 }

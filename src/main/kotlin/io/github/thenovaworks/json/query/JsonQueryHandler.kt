@@ -42,8 +42,6 @@ class JsonQueryHandler(private val schemaName: String, private val jsonMessage: 
             }
 
             QueryResult(columns, results).right()
-
-            QueryResult(columns, results).right()
         } catch (e: Exception) {
             e.printStackTrace()
             e.message.orEmpty().left()

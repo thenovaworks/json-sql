@@ -1,0 +1,39 @@
+{
+  "version": "0",
+  "id": "5b38cf5c-031f-65f2-5600-70d991abc1a3",
+  "detail-type": "AWS Health Event",
+  "source": "aws.health",
+  "account": "216093335544",
+  "time": "2024-07-12T03:21:27Z",
+  "region": "ap-northeast-2",
+  "resources": [
+    "i-0ffcc7a03f3ff2f97"
+  ],
+  "detail": {
+    "eventArn": "arn:aws:health:ap-northeast-2::event/EC2/AWS_EC2_SIMPLIFIED_AUTO_RECOVERY_SUCCESS/AWS_EC2_SIMPLIFIED_AUTO_RECOVERY_SUCCESS4fe0df56-02cb-4038-8155-cbededf27e7c",
+    "service": "EC2",
+    "eventTypeCode": "AWS_EC2_SIMPLIFIED_AUTO_RECOVERY_SUCCESS",
+    "eventTypeCategory": "accountNotification",
+    "eventScopeCode": "ACCOUNT_SPECIFIC",
+    "communicationId": "7a8198a14407114e76115b9dec3899086a36cc4c-1",
+    "startTime": "Fri, 12 Jul 2024 03:20:45 GMT",
+    "lastUpdatedTime": "Fri, 12 Jul 2024 03:20:47 GMT",
+    "statusCode": "open",
+    "eventRegion": "ap-northeast-2",
+    "eventDescription": [
+      {
+        "language": "en_US",
+        "latestDescription": "One of your Amazon EC2 instances associated with your AWS account in the ap-northeast-2 Region was successfully recovered after a failed System status check. \\n\\nThe Instance ID is listed in the 'Affected resources' tab.\\n\\n* What do I need to do?\\nYour instance is running and reporting healthy. If you have startup procedures that aren't automated during your instance boot process, please remember that you need to log in and run them.\\n\\n* Why did Amazon EC2 auto recover my instance?\\nYour instance was configured to automatically recover after a failed System status check. Your instance may have failed a System status check due to an underlying hardware failure or due to loss of network connectivity or power. \\n\\nPlease refer to https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-recover.html#auto-recovery-configuration for more information.\\n\\n* How is the recovered instance different from the original instance?\\nThe recovered instance is identical to the original instance, including the instance ID, private IP addresses, public IP address, Elastic IP addresses, attached EBS volumes and all instance metadata. The instance is rebooted as part of the automatic recovery process and the contents of the memory (RAM) are not retained.\\n\\nYou can learn more about Amazon EC2 Auto Recovery here: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-recover.html\\n\\nIf you have any questions or concerns, you can contact the AWS Support Team on the community forums and via AWS Premium Support at: https://aws.amazon.com/support"
+      }
+    ],
+    "affectedEntities": [
+      {
+        "entityValue": "i-0ffcc7a03f3ff2f97",
+        "lastUpdatedTime": "Fri, 12 Jul 2024 03:20:47 GMT"
+      }
+    ],
+    "affectedAccount": "216093335544",
+    "page": "1",
+    "totalPages": "1"
+  }
+}
