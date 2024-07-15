@@ -38,8 +38,7 @@ import java.util.*
 //}
 
 
-@Suppress("UNCHECKED_CAST")
-class JsonQueryHandler(private val schemaName: String, private val jsonMessage: String) {
+class JsonQueryHandler(private val schemaName: String, jsonMessage: String) {
     private val objectMapper: ObjectMapper = jacksonObjectMapper()
     private val rootNode: JsonNode = objectMapper.readTree(jsonMessage)
 
@@ -128,6 +127,7 @@ class JsonQueryHandler(private val schemaName: String, private val jsonMessage: 
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     private fun toNumber(stringVal: String): Comparable<Number> {
         return try {
             stringVal.toIntOrNull()?.let { it as Comparable<Number> }

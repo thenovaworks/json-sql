@@ -5,13 +5,15 @@ import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class JsonQueryHandlerTest {
 
     @Test
     @Order(1)
-    fun `test-convertStringToNumber`(): Unit {
+    fun `test-convertStringToNumber`() {
         val val1 = "1"
         val val2 = "23.0"
 
@@ -46,7 +48,7 @@ class JsonQueryHandlerTest {
 
     @Test
     @Order(2)
-    fun `test-query`(): Unit {
+    fun `test-query`() {
         val rs = SqlSession(
             JsonQueryHandler("HEALTH", json101)
         ).executeQuery("select id, detail.service, detail.statusCode, region from HEALTH")
@@ -58,7 +60,7 @@ class JsonQueryHandlerTest {
 
     @Test
     @Order(3)
-    fun `test-queryForObject-with-parameter`(): Unit {
+    fun `test-queryForObject-with-parameter`() {
         val sqlSession = SqlSession(JsonQueryHandler("HEALTH", json101))
         val sql =
             "select id, detail.service, detail.statusCode, region from HEALTH where id = '7bf73129-1428-4cd3-a780-95db273d1602'"
@@ -68,7 +70,7 @@ class JsonQueryHandlerTest {
 
     @Test
     @Order(3)
-    fun `test-queryForObject-TC101-with-parameter`(): Unit {
+    fun `test-queryForObject-TC101-with-parameter`() {
         val sqlSession = SqlSession(JsonQueryHandler("HEALTH", json101))
         val sql = "select id, detail.service, detail.statusCode, region from HEALTH where id = :id"
         val rs = sqlSession.queryForObject(sql, mapOf("id" to "7bf73129-1428-4cd3-a780-95db273d1602"))
@@ -78,20 +80,23 @@ class JsonQueryHandlerTest {
 
     @Test
     @Order(4)
-    fun `test-queryForObject-with-conditions`(): Unit {
+    fun `test-queryForObject-with-conditions`() {
         val sqlSession = SqlSession(JsonQueryHandler("HEALTH", json101))
         val params = mapOf(
             "id" to "7bf73129-1428-4cd3-a780-95db273d1602", "statusCode" to "closed"
         )
         val sql =
             "select id, detail.service, detail.statusCode, region " + "from HEALTH " + "where id = :id " + "and detail.statusCode = :statusCode"
-        val rs = sqlSession.queryForObject(sql, params)
-        assertEquals(0, rs.size())
+        val data = sqlSession.queryForObject(sql, params)
+        println(data)
+        assertTrue { data.isNullOrEmpty() }
+        assertFalse { data.isNotEmpty() }
+
     }
 
     @Test
     @Order(5)
-    fun `test-queryForObject-with-conditions-or`(): Unit {
+    fun `test-queryForObject-with-conditions-or`() {
         val sqlSession = SqlSession(JsonQueryHandler("HEALTH", json101))
         val params = mapOf(
             "id" to "7bf73129-1428-4cd3-a780-95db273d1602", "source" to "aws.health", "statusCode" to "closed"
@@ -107,7 +112,7 @@ class JsonQueryHandlerTest {
 
     @Test
     @Order(6)
-    fun `test-queryForObject-with-conditions-multi`(): Unit {
+    fun `test-queryForObject-with-conditions-multi`() {
         val sqlSession = SqlSession(JsonQueryHandler("HEALTH", json101))
         val params = mapOf(
             "id" to "7bf73129-1428-4cd3-a780-95db273d1602", "source" to "aws.health", "statusCode" to "closed"
@@ -121,7 +126,7 @@ class JsonQueryHandlerTest {
 
     @Test
     @Order(7)
-    fun `test-queryForObject-TC102-with-conditions`(): Unit {
+    fun `test-queryForObject-TC102-with-conditions`() {
         val sql = """
 select  time,
         resources,
@@ -144,7 +149,7 @@ and     source = 'aws.health'
 
     @Test
     @Order(8)
-    fun `test-queryForObject-TC102-with-params`(): Unit {
+    fun `test-queryForObject-TC102-with-params`() {
         val sql = """
 select  time, time_01, resources,  id, source, region,
         detail.service, detail.statusCode, detail.affectedEntities
@@ -163,7 +168,7 @@ and     detail.statusCode = :statusCode
 
     @Test
     @Order(9)
-    fun `test-queryForList-TC101-users`(): Unit {
+    fun `test-queryForObject-TC101-users`() {
         val json = toJsonString("/users101.json")
         val sqlSession = SqlSession(JsonQueryHandler("USER", json))
         val sql = """
@@ -173,23 +178,22 @@ select  id, index, guid, isActive, balance,
 from    USER
 where   id = :id
     """
-        val list = sqlSession.queryForList(sql, mapOf("id" to "668feca3b450e6d8f583b561"))
-        assertEquals(1, list.size)
-        list.forEach { row ->
-            val age = row.getInt("age", 0)
-            val name = row.getString("name")
-            val registered = row.getDate("registered")
+        val data = sqlSession.queryForObject(sql, mapOf("id" to "668feca3b450e6d8f583b561"))
+        assertTrue(data.isNotEmpty())
 
-            println("Age: $age")
-            println("Name: $name")
-            println("registered: $registered")
-        }
+        val age = data.getInt("age")
+        val name = data.getString("name")
+        val registered = data.getDate("registered")
+
+        println("Age: $age")
+        println("Name: $name")
+        println("registered: $registered")
     }
 
 
     @Test
     @Order(10)
-    fun `test-queryForList-TC102-users-active`(): Unit {
+    fun `test-queryForList-TC102-users-active`() {
         val json = toJsonString("/users102.json")
         val sqlSession = SqlSession(JsonQueryHandler("USER", json))
         val sql = """
@@ -199,14 +203,14 @@ select  id, index, guid, isActive, balance,
 from    USER
 where   isActive = false
     """
-        val list = sqlSession.queryForList(sql, mapOf("index" to "20"))
+        val list = sqlSession.queryForList(sql, mapOf("index" to 20))
         list.forEach { println(it) }
         assertEquals(13, list.size)
     }
 
     @Test
     @Order(11)
-    fun `test-users-102-index`(): Unit {
+    fun `test-users-102-index`() {
         val json = toJsonString("/users102.json")
         val sqlSession = SqlSession(JsonQueryHandler("USER", json))
         val sql = """
@@ -224,7 +228,7 @@ where   index > :index
 
     @Test
     @Order(12)
-    fun `test-users-102-age`(): Unit {
+    fun `test-users-102-age`() {
         val json = toJsonString("/users102.json")
         val sqlSession = SqlSession(JsonQueryHandler("USER", json))
         val sql = """
@@ -242,7 +246,7 @@ where   age > 28 and age <= 30
 
     @Test
     @Order(13)
-    fun `test-users-103-where-params`(): Unit {
+    fun `test-users-103-where-params`() {
         val json = toJsonString("/users103.json")
         val sqlSession = SqlSession(JsonQueryHandler("member", json))
         val sql = """
@@ -262,7 +266,7 @@ and     eyeColor = :eyeColor
 
     @Test
     @Order(14)
-    fun `test-health-104-result-map-utils`(): Unit {
+    fun `test-health-104-result-map-utils`() {
         val json = toJsonString("/health104.json")
         val sqlSession = SqlSession(JsonQueryHandler("health", json))
         val sql = """

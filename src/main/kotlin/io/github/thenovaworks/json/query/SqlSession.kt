@@ -8,7 +8,7 @@ class SqlSession(private val queryHandler: JsonQueryHandler) {
         return queryHandler.executeQuery(query, params)
     }
 
-    fun queryForObject(query: String, params: Map<String, String> = emptyMap()): JsonResultMap {
+    fun queryForObject(query: String, params: Map<String, Any> = emptyMap()): JsonResultMap {
         val rs = executeQuery(query, params)
         return rs.fold(
             { error -> throw RuntimeException(error) },
@@ -16,7 +16,7 @@ class SqlSession(private val queryHandler: JsonQueryHandler) {
         )
     }
 
-    fun queryForList(query: String, params: Map<String, String> = emptyMap()): List<JsonResultMap> {
+    fun queryForList(query: String, params: Map<String, Any> = emptyMap()): List<JsonResultMap> {
         val rs = executeQuery(query, params)
         return rs.fold(
             { error -> throw RuntimeException(error) },

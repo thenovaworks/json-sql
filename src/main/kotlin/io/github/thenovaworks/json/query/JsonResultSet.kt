@@ -18,8 +18,8 @@ data class JsonResultSet(val columns: List<String> = emptyList(), val data: List
     fun size(): Int {
         return data.size
     }
-}
 
+}
 
 data class JsonResultMap(val map: Map<String, Any> = emptyMap()) {
 
@@ -58,17 +58,16 @@ data class JsonResultMap(val map: Map<String, Any> = emptyMap()) {
     }
 
     fun getString(columnName: String, defaultValue: String = ""): String {
-        return map[columnName]?.toString() ?: defaultValue
+        return map[columnName] as String? ?: defaultValue
     }
 
     fun getInt(columnName: String, defaultValue: Int = 0): Int {
-        return map[columnName]?.toString()?.toIntOrNull() ?: defaultValue
+        return (map[columnName] as String?)?.toIntOrNull() ?: defaultValue
     }
 
+
     fun getDate(columnName: String, defaultValue: LocalDateTime = LocalDateTime.MIN): LocalDateTime {
-        return map[columnName]?.toString()?.let {
-            toLocalDateTime(it)
-        } ?: defaultValue
+        return (map[columnName] as String?)?.let { toLocalDateTime(it) } ?: defaultValue
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -76,13 +75,34 @@ data class JsonResultMap(val map: Map<String, Any> = emptyMap()) {
         return map[columnName] as List<Map<String, Any>>?
     }
 
-
     fun get(columnName: String): Any? {
         return map[columnName]
     }
 
-    fun size(): Int {
-        return map.size
+    /*
+    @Suppress("UNUSED_EXPRESSION")
+    fun <T> get(columnName: String, clazz: Class<T>): T? {
+        val obj = map[columnName]
+        return obj?.let {
+            clazz.cast(obj)
+        }?.also { null }
+    }
+    */
+
+    fun keys(): Set<String> {
+        return map.keys
+    }
+
+    fun values(): Collection<Any> {
+        return map.values
+    }
+
+    fun isNotEmpty(): Boolean {
+        return map.isNotEmpty()
+    }
+
+    fun isNullOrEmpty(): Boolean {
+        return map.isNullOrEmpty()
     }
 
 }
