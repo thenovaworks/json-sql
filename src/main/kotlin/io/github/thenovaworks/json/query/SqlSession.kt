@@ -4,26 +4,23 @@ import arrow.core.Either
 
 class SqlSession(private val queryHandler: JsonQueryHandler) {
 
-    fun executeQuery(query: String, params: Map<String, Any> = emptyMap()): Either<String, QueryResult> {
+    fun executeQuery(query: String, params: Map<String, Any> = emptyMap()): Either<String, JsonResultSet> {
         return queryHandler.executeQuery(query, params)
     }
 
-    fun queryForObject(query: String, params: Map<String, Any> = emptyMap()): Map<String, Any> {
-        val resultSet = executeQuery(query, params)
-        val record = resultSet.fold(
+    fun queryForObject(query: String, params: Map<String, String> = emptyMap()): JsonResultMap {
+        val rs = executeQuery(query, params)
+        return rs.fold(
             { error -> throw RuntimeException(error) },
-            { result ->
-                result.data.firstOrNull() ?: emptyMap()
-            })
-        return record
+            { it.getData() }
+        )
     }
 
-    fun queryForList(query: String, params: Map<String, Any> = emptyMap()): List<Map<out Any, Any>> {
-        val resultSet = executeQuery(query, params)
-        val records = resultSet.fold(
+    fun queryForList(query: String, params: Map<String, String> = emptyMap()): List<JsonResultMap> {
+        val rs = executeQuery(query, params)
+        return rs.fold(
             { error -> throw RuntimeException(error) },
-            { result -> result.data.toList() })
-        return records
+            { it.getList() })
     }
 
     fun getKeys(depth: Int = 1): List<String> {

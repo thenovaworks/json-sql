@@ -8,13 +8,42 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import java.util.*
 
-data class QueryResult(val columns: List<String>, val data: List<Map<String, Any>>)
 
+//fun QueryResult.getInt(columnName: String, defaultValue: Int = 0): Int {
+//    return data.firstOrNull()?.get(columnName)?.toString()?.toIntOrNull() ?: defaultValue
+//}
+//
+//fun QueryResult.getString(columnName: String, defaultValue: String = ""): String {
+//    return data.firstOrNull()?.get(columnName)?.toString() ?: defaultValue
+//}
+//
+//fun QueryResult.getDate(columnName: String, defaultValue: LocalDateTime = LocalDateTime.MIN): LocalDateTime {
+//    return data.firstOrNull()?.get(columnName)?.toString()?.let {
+//        LocalDateTime.parse(it)
+//    } ?: defaultValue
+//}
+//
+//fun Map<String, Any>.getInt(columnName: String, defaultValue: Int = 0): Int {
+//    return this[columnName]?.toString()?.toIntOrNull() ?: defaultValue
+//}
+//
+//fun Map<String, Any>.getString(columnName: String, defaultValue: String = ""): String {
+//    return this[columnName]?.toString() ?: defaultValue
+//}
+//
+//fun Map<String, Any>.getDate(columnName: String, defaultValue: LocalDateTime = LocalDateTime.MIN): LocalDateTime {
+//    return this[columnName]?.toString()?.let {
+//        toLocalDateTime(it)
+//    } ?: defaultValue
+//}
+
+
+@Suppress("UNCHECKED_CAST")
 class JsonQueryHandler(private val schemaName: String, private val jsonMessage: String) {
     private val objectMapper: ObjectMapper = jacksonObjectMapper()
     private val rootNode: JsonNode = objectMapper.readTree(jsonMessage)
 
-    fun executeQuery(query: String, params: Map<String, Any> = emptyMap()): Either<String, QueryResult> {
+    fun executeQuery(query: String, params: Map<String, Any> = emptyMap()): Either<String, JsonResultSet> {
         return try {
             val selectPattern =
                 Regex("(?i)select\\s+(.+)\\s+from\\s+$schemaName(?:\\s+where\\s+(.+))?", RegexOption.DOT_MATCHES_ALL)
@@ -36,12 +65,12 @@ class JsonQueryHandler(private val schemaName: String, private val jsonMessage: 
             }
 
             val results = filteredRecords.map { record ->
-                columns.associateWith { column ->
+                JsonResultMap(columns.associateWith { column ->
                     getValueFromJson(record, column)
-                }
+                })
             }
 
-            QueryResult(columns, results).right()
+            JsonResultSet(columns, results).right()
         } catch (e: Exception) {
             e.printStackTrace()
             e.message.orEmpty().left()
