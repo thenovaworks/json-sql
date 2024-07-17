@@ -89,7 +89,7 @@ class JsonQueryHandlerTest {
             "select id, detail.service, detail.statusCode, region " + "from HEALTH " + "where id = :id " + "and detail.statusCode = :statusCode"
         val data = sqlSession.queryForObject(sql, params)
         println(data)
-        assertTrue { data.isNullOrEmpty() }
+        assertTrue { data.isEmpty() }
         assertFalse { data.isNotEmpty() }
 
     }
